@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../api/client";
+import { api, authErrorMessage, getUser } from "../api/client";
 
 export default function Quiz() {
   const [lesson, setLesson] = useState("py-101");
@@ -17,11 +17,15 @@ export default function Quiz() {
     }
   }
   async function submit() {
+    if (!getUser()) {
+      setResult("Login required — sign in above.");
+      return;
+    }
     try {
-      const r = await api.submitQuiz("dev-user", lesson, answers);
+      const r = await api.submitQuiz(lesson, answers);
       setResult(`Score ${r.score} — ${r.recommendation.reason}`);
-    } catch {
-      setResult("Submit failed.");
+    } catch (e) {
+      setResult(authErrorMessage(e));
     }
   }
   return (

@@ -1,13 +1,35 @@
 // API layer only. No UI here.
 const BASE: string = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 const TOKEN_KEY = "ivy-token";
-const DEFAULT_USER = "dev-user";
+const USER_KEY = "ivy-user";
+
+export const USER_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 export function getToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
+  }
+}
+
+export function getUser(): string | null {
+  try {
+    return localStorage.getItem(USER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function isLoggedIn(): boolean {
+  return getToken() !== null && getUser() !== null;
+}
+
+function setUser(user_id: string): void {
+  try {
+    localStorage.setItem(USER_KEY, user_id);
+  } catch {
+    /* storage unavailable */
   }
 }
 
@@ -19,8 +41,35 @@ export function setToken(token: string): void {
   }
 }
 
+export function clearAuth(): void {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearTokenKeepUser(): void {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function reqId(): string {
   return crypto.randomUUID();
+}
+
+export function authErrorMessage(e: unknown): string {
+  if (e instanceof Error) {
+    if (e.message.includes("401") || e.message.includes("Login required"))
+      return "Login required — sign in above.";
+    if (e.message.includes("403")) return "Forbidden — that data belongs to another user.";
+    return e.message;
+  }
+  return "Request failed.";
 }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
@@ -39,46 +88,67 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 async function authed<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!getToken()) await login(DEFAULT_USER);
+  if (!getToken() || !getUser()) throw new Error("Login required (401)");
   try {
     return await req<T>(path, init);
   } catch (e) {
-    // Token may be expired — mint once more and retry.
-    if (e instanceof Error && e.message.includes("401")) {
-      await login(DEFAULT_USER);
-      return await req<T>(path, init);
-    }
+    if (e instanceof Error && e.message.includes("401")) clearTokenKeepUser();
     throw e;
   }
 }
 
-export async function login(user_id: string = DEFAULT_USER): Promise<string> {
+function requireUser(): string {
+  const u = getUser();
+  if (!u || !getToken()) throw new Error("Login required (401)");
+  return u;
+}
+
+export async function login(user_id: string): Promise<string> {
+  const id = user_id.trim();
+  if (!USER_RE.test(id)) throw new Error("Invalid user id — use 1-64 chars: A-Z a-z 0-9 _ -");
   const res = await fetch(`${BASE}/api/auth/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Request-ID": reqId() },
-    body: JSON.stringify({ user_id }),
+    body: JSON.stringify({ user_id: id }),
   });
   if (!res.ok) throw new Error(`Login failed: ${res.status}`);
   const data = (await res.json()) as { access_token: string };
   setToken(data.access_token);
+  setUser(id);
   return data.access_token;
+}
+
+export function logout(): void {
+  clearAuth();
 }
 
 export const api = {
   login,
+  logout,
   curriculum: () => req<{ tracks: Track[] }>("/api/curriculum"),
   library: (q = "") => req<{ items: LibItem[] }>(`/api/library?q=${encodeURIComponent(q)}`),
   quiz: (id: string) => req<{ questions: QuizQ[] }>(`/api/quiz/${id}`),
-  submitQuiz: (user_id: string, lesson_id: string, answers: number[]) =>
-    authed<{ score: number; recommendation: Rec }>(`/api/quiz/submit`, {
+  submitQuiz: (lesson_id: string, answers: number[]) => {
+    const user_id = requireUser();
+    return authed<{ score: number; recommendation: Rec }>(`/api/quiz/submit`, {
       method: "POST",
       body: JSON.stringify({ user_id, lesson_id, answers }),
-    }),
-  recommend: (user_id: string) =>
-    authed<{ recommendation: Rec; completed: string[] }>(`/api/adaptive/recommend/${user_id}`),
-  progress: (user_id: string) => authed<Progress[]>(`/api/progress/${user_id}`),
-  saveProgress: (p: Progress) =>
-    authed(`/api/progress`, { method: "POST", body: JSON.stringify(p) }),
+    });
+  },
+  recommend: () => {
+    const user_id = requireUser();
+    return authed<{ recommendation: Rec; completed: string[] }>(
+      `/api/adaptive/recommend/${encodeURIComponent(user_id)}`,
+    );
+  },
+  progress: () => {
+    const user_id = requireUser();
+    return authed<Progress[]>(`/api/progress/${encodeURIComponent(user_id)}`);
+  },
+  saveProgress: (p: ProgressInput) => {
+    const user_id = requireUser();
+    return authed(`/api/progress`, { method: "POST", body: JSON.stringify({ ...p, user_id }) });
+  },
   health: () => req<{ status: string }>(`/health`),
   runCode: (language: string, code: string) =>
     authed<{ output: string }>(`/api/code/run`, {
@@ -89,8 +159,13 @@ export const api = {
     const q = track ? `?track=${encodeURIComponent(track)}` : "";
     return req<{ posts: Post[] }>(`/api/community/posts${q}`);
   },
-  addPost: (p: Omit<Post, "id">) =>
-    authed<Post>(`/api/community/posts`, { method: "POST", body: JSON.stringify(p) }),
+  addPost: (p: PostInput) => {
+    const author = requireUser();
+    return authed<Post>(`/api/community/posts`, {
+      method: "POST",
+      body: JSON.stringify({ ...p, author }),
+    });
+  },
 };
 
 export interface Track {
@@ -120,6 +195,7 @@ export interface Progress {
   completed: boolean;
   score?: number | null;
 }
+export type ProgressInput = Omit<Progress, "user_id">;
 export interface Post {
   id: string;
   author: string;
@@ -127,3 +203,4 @@ export interface Post {
   body: string;
   track: string;
 }
+export type PostInput = Omit<Post, "id" | "author">;

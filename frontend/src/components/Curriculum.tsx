@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { useCurriculum } from "../hooks/useCurriculum";
-import { api } from "../api/client";
+import { api, authErrorMessage, getUser } from "../api/client";
 
 export default function Curriculum() {
   const { tracks, error } = useCurriculum();
   const [msg, setMsg] = useState("");
   async function complete(course_id: string, lesson_id: string) {
+    if (!getUser()) {
+      setMsg("Login required — sign in above.");
+      return;
+    }
     try {
-      await api.saveProgress({ user_id: "dev-user", course_id, lesson_id, completed: true });
+      await api.saveProgress({ course_id, lesson_id, completed: true });
       setMsg(`Saved ${lesson_id}`);
-    } catch {
-      setMsg("Save failed — is the backend running?");
+    } catch (e) {
+      setMsg(authErrorMessage(e));
     }
   }
   return (

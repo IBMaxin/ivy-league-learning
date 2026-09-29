@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type LibItem, type Post } from "../api/client";
+import { api, authErrorMessage, getUser, type LibItem, type Post } from "../api/client";
 
 const TRACKS = ["general", "cs-fundamentals", "fullstack", "maths", "humanities"];
 
@@ -54,13 +54,16 @@ export function Community() {
   }, [track]);
 
   async function add() {
+    if (!getUser()) {
+      setMsg("Login required — sign in above.");
+      return;
+    }
     if (!title.trim()) {
       setMsg("Write a question first.");
       return;
     }
     try {
       const p = await api.addPost({
-        author: "learner",
         title: title.trim(),
         body: title.trim(),
         track: track || "general",
@@ -68,8 +71,8 @@ export function Community() {
       setPosts((s) => [...s, p]);
       setTitle("");
       setMsg("Posted.");
-    } catch {
-      setMsg("Post failed — backend offline?");
+    } catch (e) {
+      setMsg(authErrorMessage(e));
     }
   }
 
@@ -117,11 +120,15 @@ export function Studio() {
   }
 
   async function sendCode() {
+    if (!getUser()) {
+      setApiOut("Login required — sign in above.");
+      return;
+    }
     try {
       const r = await api.runCode("python", code);
       setApiOut(r.output);
-    } catch {
-      setApiOut("Code run failed — backend offline?");
+    } catch (e) {
+      setApiOut(authErrorMessage(e));
     }
   }
 
