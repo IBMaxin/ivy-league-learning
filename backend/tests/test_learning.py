@@ -19,9 +19,19 @@ def test_curriculum_shape():
     r = client.get("/api/curriculum")
     assert r.status_code == 200
     tracks = r.json()["tracks"]
-    assert len(tracks) == 2
+    assert len(tracks) == 4
     lessons = [lesson["id"] for t in tracks for lesson in t["lessons"]]
-    assert {"py-101", "js-101", "rust-101", "api-101", "react-101"} <= set(lessons)
+    assert {
+        "py-101",
+        "js-101",
+        "rust-101",
+        "api-101",
+        "react-101",
+        "maths-101",
+        "stats-101",
+        "hum-101",
+        "writing-101",
+    } <= set(lessons)
 
 
 def test_library_all_and_search():
@@ -90,6 +100,28 @@ def test_adaptive_recommendation():
     assert body["completed"]
     assert client.get("/api/adaptive/recommend/other", headers=AUTH).status_code == 403
     assert client.get("/api/adaptive/recommend/dev-user").status_code == 401
+
+
+def test_new_tracks_quiz_submit_and_recommend():
+    auth = _auth("fresh-learner")
+    for lesson_id, answers in [
+        ("maths-101", [1, 1, 1]),
+        ("stats-101", [1, 1, 1]),
+        ("hum-101", [1, 1, 1]),
+        ("writing-101", [0, 1, 1]),
+    ]:
+        q = client.get(f"/api/quiz/{lesson_id}")
+        assert q.status_code == 200
+        assert len(q.json()["questions"]) == 3
+        r = client.post(
+            "/api/quiz/submit",
+            json={"user_id": "fresh-learner", "lesson_id": lesson_id, "answers": answers},
+            headers=auth,
+        )
+        assert r.status_code == 200
+        assert r.json()["score"] == 100.0
+    rec = client.get("/api/adaptive/recommend/fresh-learner", headers=auth).json()
+    assert rec["recommendation"]["lesson_id"] == "py-101"
 
 
 def test_community_roundtrip():

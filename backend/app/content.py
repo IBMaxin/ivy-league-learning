@@ -59,6 +59,54 @@ TRACKS: list[dict] = [
             },
         ],
     },
+    {
+        "id": "maths",
+        "title": "Mathematics",
+        "level": "beginner",
+        "description": "Algebra and statistics foundations.",
+        "lessons": [
+            {
+                "id": "maths-101",
+                "title": "Algebra Basics",
+                "language": "python",
+                "duration_min": 45,
+                "objectives": ["equations", "functions", "graphs"],
+                "source": "See /api/library entries for open links",
+            },
+            {
+                "id": "stats-101",
+                "title": "Statistics Basics",
+                "language": "python",
+                "duration_min": 45,
+                "objectives": ["mean", "distributions", "sampling"],
+                "source": "See /api/library entries for open links",
+            },
+        ],
+    },
+    {
+        "id": "humanities",
+        "title": "Humanities",
+        "level": "beginner",
+        "description": "Critical reading and academic writing.",
+        "lessons": [
+            {
+                "id": "hum-101",
+                "title": "Critical Reading",
+                "language": "javascript",
+                "duration_min": 45,
+                "objectives": ["thesis", "evidence", "context"],
+                "source": "See /api/library entries for open links",
+            },
+            {
+                "id": "writing-101",
+                "title": "Academic Writing",
+                "language": "javascript",
+                "duration_min": 45,
+                "objectives": ["structure", "citation", "revision"],
+                "source": "See /api/library entries for open links",
+            },
+        ],
+    },
 ]
 
 LESSON_ORDER: list[dict] = [
@@ -67,6 +115,10 @@ LESSON_ORDER: list[dict] = [
     {"id": "rust-101", "track": "cs-fundamentals", "title": "Rust Basics"},
     {"id": "api-101", "track": "fullstack", "title": "FastAPI Intro"},
     {"id": "react-101", "track": "fullstack", "title": "React + TypeScript"},
+    {"id": "maths-101", "track": "maths", "title": "Algebra Basics"},
+    {"id": "stats-101", "track": "maths", "title": "Statistics Basics"},
+    {"id": "hum-101", "track": "humanities", "title": "Critical Reading"},
+    {"id": "writing-101", "track": "humanities", "title": "Academic Writing"},
 ]
 
 LIBRARY: list[dict] = [
@@ -166,6 +218,30 @@ LIBRARY: list[dict] = [
         "level": "beginner",
         "url": "https://docs.python.org/3/tutorial/",
     },
+    {
+        "id": "khan-algebra",
+        "title": "Algebra 1",
+        "university": "Khan Academy (Open)",
+        "type": "course",
+        "level": "beginner",
+        "url": "https://www.khanacademy.org/math/algebra",
+    },
+    {
+        "id": "khan-stats",
+        "title": "Statistics and Probability",
+        "university": "Khan Academy (Open)",
+        "type": "course",
+        "level": "beginner",
+        "url": "https://www.khanacademy.org/math/statistics-probability",
+    },
+    {
+        "id": "gutenberg",
+        "title": "Project Gutenberg Ebooks",
+        "university": "Open (Public Domain)",
+        "type": "collection",
+        "level": "all",
+        "url": "https://www.gutenberg.org/",
+    },
 ]
 
 
@@ -244,6 +320,62 @@ QUIZZES: dict[str, list[dict]] = {
         _qa(
             "Keys in a list help React…",
             ["encrypt data", "identify items efficiently", "style pages", "fetch APIs"],
+            1,
+        ),
+    ],
+    "maths-101": [
+        _qa("Solve for x: 2x + 3 = 11.", ["x = 2", "x = 4", "x = 5", "x = 8"], 1),
+        _qa(
+            "Which is a function?",
+            ["x² + y² = 1", "y = 2x + 1", "x = 5", "|x| + |y| = 1"],
+            1,
+        ),
+        _qa("Slope of y = 3x − 2 is…", ["2", "3", "−2", "0"], 1),
+    ],
+    "stats-101": [
+        _qa("Mean of [2, 4, 6] is…", ["3", "4", "5", "6"], 1),
+        _qa(
+            "A random sample should be…",
+            ["hand-picked", "representative", "largest first", "sorted"],
+            1,
+        ),
+        _qa(
+            "Which plot shows distribution shape?",
+            ["pie chart", "histogram", "timeline", "org chart"],
+            1,
+        ),
+    ],
+    "hum-101": [
+        _qa(
+            "A thesis statement should…",
+            ["list facts", "make a claim", "ask no question", "summarize the ending"],
+            1,
+        ),
+        _qa(
+            "Strong evidence is…",
+            ["anecdote only", "relevant and sourced", "longest quote", "first result"],
+            1,
+        ),
+        _qa(
+            "Context in analysis means…",
+            ["word count", "historical/cultural background", "font choice", "page size"],
+            1,
+        ),
+    ],
+    "writing-101": [
+        _qa(
+            "An academic paragraph usually has…",
+            ["one idea, structured", "five topics", "no evidence", "only quotes"],
+            0,
+        ),
+        _qa(
+            "Citations exist to…",
+            ["pad length", "credit sources", "hide ideas", "avoid conclusions"],
+            1,
+        ),
+        _qa(
+            "Revision focuses on…",
+            ["fonts first", "ideas, structure, clarity", "file names", "word count only"],
             1,
         ),
     ],

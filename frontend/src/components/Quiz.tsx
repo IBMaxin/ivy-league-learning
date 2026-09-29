@@ -37,6 +37,10 @@ export default function Quiz() {
         <option value="rust-101">Rust Basics</option>
         <option value="api-101">FastAPI Intro</option>
         <option value="react-101">React + TS</option>
+        <option value="maths-101">Algebra Basics</option>
+        <option value="stats-101">Statistics Basics</option>
+        <option value="hum-101">Critical Reading</option>
+        <option value="writing-101">Academic Writing</option>
       </select>{" "}
       <button onClick={() => void load()}>Load quiz</button>
       {qs.map((q, i) => (
