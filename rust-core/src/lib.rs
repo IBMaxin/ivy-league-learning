@@ -2,5 +2,5 @@
 pub mod mastery;
 pub mod validate;
 
-pub use mastery::{mastery, recommend_next};
+pub use mastery::{grade_quiz, mastery, pace_for, recommend_next};
 pub use validate::{validate, MAX_CHARS};

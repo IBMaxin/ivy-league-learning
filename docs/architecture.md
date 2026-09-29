@@ -40,10 +40,11 @@ Storage: SQLite file locally (`ivy.db`), Postgres via `IVY_DATABASE_URL`
 | Module | Owns |
 |---|---|
 | `lib.rs` | Re-exports |
-| `mastery.rs` | Score averaging + next-lesson pick |
+| `mastery.rs` | Score averaging, quiz grading, pace, next-lesson pick |
 | `validate.rs` | Submission validation |
 
-Mirrors `services.py` logic; the two must agree on the 70% mastery threshold.
+Mirrors `services.py` logic (70% mastery threshold, quiz grading to 1 decimal,
+pace cutoffs at 5/10 attempts); the two must agree.
 
 ## Data flow (quiz submit)
 
