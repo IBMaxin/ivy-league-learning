@@ -66,6 +66,12 @@ small{color:#555}
 <option value="py-101">Python Basics</option>
 <option value="js-101">JS Basics</option>
 <option value="rust-101">Rust Basics</option>
+<option value="api-101">FastAPI Intro</option>
+<option value="react-101">React + TypeScript</option>
+<option value="maths-101">Algebra Basics</option>
+<option value="stats-101">Statistics Basics</option>
+<option value="hum-101">Critical Reading</option>
+<option value="writing-101">Academic Writing</option>
 </select>
 <div id="qs"></div>
 <button onclick="grade()">Submit</button>
@@ -91,8 +97,8 @@ small{color:#555}
 </section>
 
 <script>
-const ORDER=["py-101","js-101","rust-101","api-101","react-101"];
-const NAMES={"py-101":"Python Basics","js-101":"JS Basics","rust-101":"Rust Basics","api-101":"FastAPI Intro","react-101":"React + TypeScript"};
+const ORDER=["py-101","js-101","rust-101","api-101","react-101","maths-101","stats-101","hum-101","writing-101"];
+const NAMES={"py-101":"Python Basics","js-101":"JS Basics","rust-101":"Rust Basics","api-101":"FastAPI Intro","react-101":"React + TypeScript","maths-101":"Algebra Basics","stats-101":"Statistics Basics","hum-101":"Critical Reading","writing-101":"Academic Writing"};
 const QUIZ={
 "py-101":[{q:"What does print(2 + 3 * 2) output?",c:["10","8","12","7"],a:1},
 {q:"Which keyword defines a function in Python?",c:["func","def","function","lambda-only"],a:1},
@@ -102,7 +108,25 @@ const QUIZ={
 {q:"JSON.parse('{\"a\":1}').a equals…",c:["1","'1'","undefined","null"],a:0}],
 "rust-101":[{q:"By default, variables are…",c:["mutable","immutable","global","dynamic"],a:1},
 {q:"Keyword that makes a variable mutable?",c:["mut","letmut","var","mutable"],a:0},
-{q:"What does cargo do?",c:["formats disks","builds/manages Rust projects","runs SQL","edits video"],a:1}]};
+{q:"What does cargo do?",c:["formats disks","builds/manages Rust projects","runs SQL","edits video"],a:1}],
+"api-101":[{q:"FastAPI is a framework for…",c:["databases only","building APIs in Python","CSS styling","mobile apps"],a:1},
+{q:"Which library validates FastAPI request bodies?",c:["Pydantic","NumPy","Pandas","Requests"],a:0},
+{q:"HTTP 201 means…",c:["redirect","server error","created","unauthorized"],a:2}],
+"react-101":[{q:"React components return…",c:["SQL","UI descriptions (JSX/elements)","binary","CSS files only"],a:1},
+{q:"useState is a…",c:["router","hook for local state","build tool","test runner"],a:1},
+{q:"Keys in a list help React…",c:["encrypt data","identify items efficiently","style pages","fetch APIs"],a:1}],
+"maths-101":[{q:"Solve for x: 2x + 3 = 11.",c:["x = 2","x = 4","x = 5","x = 8"],a:1},
+{q:"Which is a function?",c:["x² + y² = 1","y = 2x + 1","x = 5","|x| + |y| = 1"],a:1},
+{q:"Slope of y = 3x − 2 is…",c:["2","3","−2","0"],a:1}],
+"stats-101":[{q:"Mean of [2, 4, 6] is…",c:["3","4","5","6"],a:1},
+{q:"A random sample should be…",c:["hand-picked","representative","largest first","sorted"],a:1},
+{q:"Which plot shows distribution shape?",c:["pie chart","histogram","timeline","org chart"],a:1}],
+"hum-101":[{q:"A thesis statement should…",c:["list facts","make a claim","ask no question","summarize the ending"],a:1},
+{q:"Strong evidence is…",c:["anecdote only","relevant and sourced","longest quote","first result"],a:1},
+{q:"Context in analysis means…",c:["word count","historical/cultural background","font choice","page size"],a:1}],
+"writing-101":[{q:"An academic paragraph usually has…",c:["one idea, structured","five topics","no evidence","only quotes"],a:0},
+{q:"Citations exist to…",c:["pad length","credit sources","hide ideas","avoid conclusions"],a:1},
+{q:"Revision focuses on…",c:["fonts first","ideas, structure, clarity","file names","word count only"],a:1}]};
 const LIB=[
 ["CS50: Intro to Computer Science","Harvard","https://cs50.harvard.edu/x/"],
 ["Intro to CS and Programming in Python","MIT OCW","https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/"],
@@ -111,7 +135,10 @@ const LIB=[
 ["The Rust Programming Language","Rust Project","https://doc.rust-lang.org/book/"],
 ["MDN Web Docs","Mozilla","https://developer.mozilla.org/"],
 ["FastAPI Documentation","Open","https://fastapi.tiangolo.com/"],
-["Python Tutorial","Python Software Foundation","https://docs.python.org/3/tutorial/"]];
+["Python Tutorial","Python Software Foundation","https://docs.python.org/3/tutorial/"],
+["Algebra 1","Khan Academy","https://www.khanacademy.org/math/algebra"],
+["Statistics and Probability","Khan Academy","https://www.khanacademy.org/math/statistics-probability"],
+["Project Gutenberg Ebooks","Public Domain","https://www.gutenberg.org/"]];
 const store={
 get scores(){return JSON.parse(localStorage.getItem("ivy-scores")||"{}");},
 set scores(v){localStorage.setItem("ivy-scores",JSON.stringify(v));},
