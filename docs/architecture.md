@@ -19,7 +19,8 @@ HTTP (routers/) → data access (repos.py) → pure logic (services.py)
 | `content.py` | Static tracks, library links, quizzes |
 | `models.py` | Pydantic validation |
 | `db.py` / `tables.py` | Engine, sessions, ORM tables |
-| `config.py` / `security.py` | Settings, auth stub + headers |
+| `config.py` / `security.py` | Settings, HS256 JWT verify (`iss`/`aud`/`exp`/`sub`) + headers |
+| `routers/auth.py` | `POST /api/auth/token` mints JWT for a `user_id` |
 
 Storage: SQLite file locally (`ivy.db`), Postgres via `IVY_DATABASE_URL`
 (compose/prod). Tables auto-created on startup; welcome post seeded once.
@@ -50,3 +51,10 @@ Mirrors `services.py` logic; the two must agree on the 70% mastery threshold.
 2. `services.grade_quiz` scores against `content.QUIZZES`
 3. `repos.add_progress` persists the attempt
 4. `services.recommend_next` picks review vs. next lesson from stored mastery
+
+## Auth flow (JWT)
+
+1. `POST /api/auth/token` with `{"user_id": "..."}` returns `{"access_token", "token_type": "bearer"}`
+2. Client stores the token (`localStorage ivy-token`) and sends `Authorization: Bearer <jwt>`
+3. `security.get_current_user_id` verifies HS256 signature + `iss`/`aud`/`exp`/`sub`, returns `sub`
+4. Routers enforce ownership: `payload.user_id == caller`, else 403; missing/invalid token is 401
