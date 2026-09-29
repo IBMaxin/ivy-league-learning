@@ -1,13 +1,15 @@
 [project]
 name = "ivy-backend"
 version = "0.1.0"
-description = "Ivy League Learning API (SOC 2 aligned baseline)"
+description = "Ivy League Learning API"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
   "fastapi==0.116.1",
   "pydantic==2.9.2",
   "pydantic-settings==2.5.0",
+  "sqlalchemy==2.0.36",
+  "psycopg[binary]==3.2.4",
   "uvicorn[standard]==0.30.6",
 ]
 

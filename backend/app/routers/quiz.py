@@ -5,17 +5,19 @@ from __future__ import annotations
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 from ..content import QUIZZES
+from ..db import get_session
 from ..models import ProgressUpdate, QuizSubmit
+from ..repos import add_progress, progress_count, user_progress
 from ..security import get_current_user_id
 from ..services import (
-    completed_lessons,
+    completed_of,
     grade_quiz,
-    mastery_for,
+    mastery_of,
     pace_for,
     recommend_next,
-    record_progress,
     track_for_lesson,
 )
 
@@ -34,7 +36,11 @@ def get_quiz(lesson_id: str) -> dict:
 
 
 @router.post("/api/quiz/submit")
-def submit_quiz(payload: QuizSubmit, caller: str = Depends(get_current_user_id)) -> dict:
+def submit_quiz(
+    payload: QuizSubmit,
+    db: Session = Depends(get_session),
+    caller: str = Depends(get_current_user_id),
+) -> dict:
     if payload.user_id != caller:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
     if payload.lesson_id not in QUIZZES:
@@ -47,34 +53,44 @@ def submit_quiz(payload: QuizSubmit, caller: str = Depends(get_current_user_id))
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="answer out of range"
             )
-    correct, score = grade_quiz(payload.lesson_id, payload.answers, key)
-    record_progress(
+    correct, score = grade_quiz(payload.answers, key)
+    add_progress(
+        db,
         ProgressUpdate(
             user_id=payload.user_id,
             course_id=track_for_lesson(payload.lesson_id),
             lesson_id=payload.lesson_id,
             completed=score >= 70.0,
             score=score,
-        )
+        ),
     )
+    entries = user_progress(db, payload.user_id)
+    mastery = mastery_of(entries)
     return {
         "score": score,
         "correct": correct,
         "total": len(key),
-        "recommendation": recommend_next(payload.user_id),
+        "recommendation": recommend_next(mastery, set(completed_of(entries))),
     }
 
 
 @router.get("/api/adaptive/recommend/{user_id}")
-def adaptive_recommend(user_id: str, caller: str = Depends(get_current_user_id)) -> dict:
+def adaptive_recommend(
+    user_id: str,
+    db: Session = Depends(get_session),
+    caller: str = Depends(get_current_user_id),
+) -> dict:
     if not _ID_RE.match(user_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid user id")
     if user_id != caller:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="forbidden")
+    entries = user_progress(db, user_id)
+    mastery = mastery_of(entries)
+    completed = completed_of(entries)
     return {
         "user_id": user_id,
-        "mastery": mastery_for(user_id),
-        "completed": completed_lessons(user_id),
-        "pace": pace_for(user_id),
-        "recommendation": recommend_next(user_id),
+        "mastery": mastery,
+        "completed": completed,
+        "pace": pace_for(progress_count(db, user_id)),
+        "recommendation": recommend_next(mastery, set(completed)),
     }

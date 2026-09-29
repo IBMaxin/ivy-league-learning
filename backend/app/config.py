@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173"]
     jwt_issuer: str = "ivy-dev"
     jwt_audience: str = "ivy-learners"
+    database_url: str = "sqlite:///./ivy.db"
 
     model_config = {"env_prefix": "IVY_", "env_file": ".env", "extra": "ignore"}
 

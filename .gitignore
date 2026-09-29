@@ -12,6 +12,8 @@ rust-core/target/
 # Env / secrets
 backend/.env
 frontend/.env
+# Local databases
+*.db
 # OS / editors
 .DS_Store
 Thumbs.db

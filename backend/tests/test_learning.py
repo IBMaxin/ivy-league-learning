@@ -74,6 +74,8 @@ def test_quiz_submit_rejects_bad_input():
 
 
 def test_adaptive_recommendation():
+    payload = {"user_id": "dev-user", "lesson_id": "py-101", "answers": [1, 1, 2]}
+    assert client.post("/api/quiz/submit", json=payload, headers=AUTH).status_code == 200
     r = client.get("/api/adaptive/recommend/dev-user", headers=AUTH)
     assert r.status_code == 200
     body = r.json()

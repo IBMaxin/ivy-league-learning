@@ -9,8 +9,12 @@ FastAPI API for the learning platform. One concern per module.
 | `app/main.py` | Wiring only: app, middleware, router mounting |
 | `app/config.py` | Env-driven settings, no secrets in code |
 | `app/security.py` | Auth stub + response headers |
+| `app/store.py` — removed | SQLAlchemy via `db`/`tables`/`repos` (SQLite file locally, Postgres via `IVY_DATABASE_URL`) |
 | `app/models.py` | Pydantic validation models |
-| `app/store.py` | In-memory state (Phase 2: Postgres) |
+| `app/db.py` | Engine + sessions + `init_db` (lifespan) |
+| `app/tables.py` | ORM tables: `progress`, `posts` |
+| `app/repos.py` | Data access: sessions in, plain data out |
+| `app/services.py` | Pure learning logic: mastery, grading, recommendations |
 | `app/content.py` | Static tracks, library links, quizzes |
 | `app/services.py` | Pure learning logic: mastery, grading, recommendations |
 | `app/routers/curriculum.py` | Public curriculum + library reads |
@@ -27,3 +31,6 @@ uv run --frozen pytest -q
 uv run --frozen ruff check .
 uv run --frozen uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+
+Postgres via compose (run at repo root): `docker compose up --build`.
+Tests use an isolated in-memory SQLite database (`tests/conftest.py`).

@@ -4,21 +4,31 @@ from __future__ import annotations
 
 import logging
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import settings
+from .db import init_db
 from .routers import community, curriculum, progress, quiz, sandbox
 from .security import SecurityHeadersMiddleware
 
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("ivy.api")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
+    init_db()
+    yield
+
+
 app = FastAPI(
     title="Ivy League Learning API",
     version="0.1.0",
+    lifespan=lifespan,
     docs_url="/docs" if settings.enable_docs else None,
     redoc_url=None if not settings.enable_docs else "/redoc",
     openapi_url="/openapi.json" if settings.enable_docs else None,
@@ -63,8 +73,4 @@ app.include_router(quiz.router)
 app.include_router(community.router)
 app.include_router(sandbox.router)
 
-# Back-compat re-exports for tests / callers importing from app.main.
-from .store import community_db as _community_db  # noqa: E402
-from .store import progress_db as _progress_db  # noqa: E402
-
-__all__ = ["app", "_progress_db", "_community_db"]
+__all__ = ["app"]
