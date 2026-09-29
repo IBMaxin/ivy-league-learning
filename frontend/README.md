@@ -28,3 +28,10 @@ npm run build    # tsc + vite build
 ```
 
 Backend URL via `.env`: `VITE_API_BASE=http://localhost:8000` (see `.env.example`).
+
+## Security notes
+
+`npm audit` flags 1 moderate + 1 high in the `vite`/`esbuild` dev-server chain
+(GHSA-67mh-4wv8-2f99). They affect `npm run dev` only, not production builds,
+and the only clean fix is a breaking vite major — so they stay non-blocking.
+Pinned to the latest vite 5 patch.
