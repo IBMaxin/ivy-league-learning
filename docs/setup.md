@@ -50,7 +50,9 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8000/api/auth/token `
   -ContentType 'application/json' -Body '{"user_id":"dev-user"}'
 ```
 
-- `IVY_JWT_SECRET` — signing key. Default is dev-only; set a long random value in staging/prod.
+- `IVY_JWT_SECRET` — signing key. Dev default works locally only; staging/prod
+  refuse to boot on it (fail-closed, min 32 chars). Generate one:
+  `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
 - `IVY_JWT_ISSUER` (default `ivy-dev`), `IVY_JWT_AUDIENCE` (default `ivy-learners`), `IVY_JWT_EXP_MINUTES` (default `60`).
 - Frontend stores the token as `ivy-token` in `localStorage` and auto-refreshes on 401.
 
