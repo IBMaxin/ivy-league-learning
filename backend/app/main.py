@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from .config import settings
 from .db import init_db
-from .routers import community, curriculum, progress, quiz, sandbox
+from .routers import auth, community, curriculum, progress, quiz, sandbox
 from .security import SecurityHeadersMiddleware
 
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(message)s")
@@ -67,6 +67,7 @@ async def request_id_and_audit_log(request: Request, call_next):  # type: ignore
     return response
 
 
+app.include_router(auth.router)
 app.include_router(curriculum.router)
 app.include_router(progress.router)
 app.include_router(quiz.router)

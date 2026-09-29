@@ -8,7 +8,8 @@ FastAPI API for the learning platform. One concern per module.
 |---|---|
 | `app/main.py` | Wiring only: app, middleware, router mounting |
 | `app/config.py` | Env-driven settings, no secrets in code |
-| `app/security.py` | Auth stub + response headers |
+| `app/security.py` | HS256 JWT verify + response headers |
+| `app/routers/auth.py` | `POST /api/auth/token` mints JWT for a user_id |
 | `app/store.py` — removed | SQLAlchemy via `db`/`tables`/`repos` (SQLite file locally, Postgres via `IVY_DATABASE_URL`) |
 | `app/models.py` | Pydantic validation models |
 | `app/db.py` | Engine + sessions + `init_db` (lifespan) |

@@ -3,9 +3,16 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.security import create_access_token
 
 client = TestClient(app, raise_server_exceptions=False)
-AUTH = {"Authorization": "Bearer dev-token"}
+
+
+def _auth(user_id: str = "dev-user") -> dict[str, str]:
+    return {"Authorization": f"Bearer {create_access_token(user_id)}"}
+
+
+AUTH = _auth()
 
 
 def test_health():
