@@ -21,7 +21,8 @@ FastAPI API for the learning platform. One concern per module.
 | `app/routers/progress.py` | Authed progress reads/writes |
 | `app/routers/quiz.py` | Public quiz fetch, authed submit, adaptive |
 | `app/routers/community.py` | Public post listing, authed creation |
-| `app/routers/sandbox.py` | Code-run stub (never executes user code) + health |
+| `app/sandbox.py` | Safe preview: allowlisted Python AST, JS/Rust static analysis |
+| `app/routers/sandbox.py` | Authed `POST /api/code/run`, never exec/import in API process |
 
 ## Commands (run in `backend/`)
 
@@ -34,6 +35,13 @@ uv run --frozen uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 Postgres via compose (run at repo root): `docker compose up --build`.
 Tests use an isolated in-memory SQLite database (`tests/conftest.py`).
+
+## Sandbox (`POST /api/code/run`, auth required)
+
+- Python: allowlisted AST only — `print()`, `x = ...`, `range()`, `for`/`while`/`if`
+  (capped: 100 loop iters, 50 prints, 10k steps). No imports, no exec/eval/open.
+- JavaScript: static preview of `console.log` calls — full run stays in the browser Coding Lab.
+- Rust: static analysis (`fn main`, `unsafe`, `println!` count) — compile with `cargo run` locally.
 
 ## Auth
 

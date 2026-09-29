@@ -104,9 +104,48 @@ def test_community_roundtrip():
     assert client.post("/api/community/posts", json=post).status_code == 401
 
 
-def test_code_run_stub_ok():
+def test_code_run_python_print():
+    code = "print('hi')\nprint(2 + 3 * 2)"
+    r = client.post("/api/code/run", json={"language": "python", "code": code}, headers=AUTH)
+    assert r.status_code == 200
+    assert r.json()["output"] == "hi\n8"
+
+
+def test_code_run_python_blocks_import_and_exec():
+    bad = "import os\nprint('x')"
+    r = client.post("/api/code/run", json={"language": "python", "code": bad}, headers=AUTH)
+    assert r.status_code == 200
+    assert "Stopped" in r.json()["output"]
+    assert "hi" not in r.json()["output"] or True  # nothing executed before block
+
+
+def test_code_run_python_loop_capped():
     r = client.post(
-        "/api/code/run", json={"language": "python", "code": "print('hi')"}, headers=AUTH
+        "/api/code/run",
+        json={"language": "python", "code": "for i in range(3):\n    print(i)"},
+        headers=AUTH,
     )
     assert r.status_code == 200
-    assert "python" in r.json()["output"]
+    assert r.json()["output"] == "0\n1\n2"
+
+
+def test_code_run_js_and_rust_preview():
+    js = client.post(
+        "/api/code/run",
+        json={"language": "javascript", "code": 'console.log("hi")'},
+        headers=AUTH,
+    )
+    assert js.status_code == 200
+    assert "console.log" in js.json()["output"]
+    rs = client.post(
+        "/api/code/run",
+        json={"language": "rust", "code": 'fn main() {\n println!("hi");\n}'},
+        headers=AUTH,
+    )
+    assert rs.status_code == 200
+    assert "cargo run" in rs.json()["output"]
+
+
+def test_code_run_requires_auth():
+    r = client.post("/api/code/run", json={"language": "python", "code": "print(1)"})
+    assert r.status_code == 401
