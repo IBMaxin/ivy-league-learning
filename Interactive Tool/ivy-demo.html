@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ivy Learning — Offline Demo</title>
+<style>
+body{font-family:system-ui;max-width:800px;margin:0 auto;padding:16px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+textarea{width:100%;font-family:monospace}
+pre{background:#f4f4f4;padding:8px;white-space:pre-wrap}
+article{border:1px solid #ddd;padding:8px;margin:8px 0}
+</style>
+</head>
+<body>
+<h1>Ivy Learning — Offline Demo</h1>
+<p>No backend needed. Open this file in a browser.</p>
+<nav>
+<button onclick="show('cur')">Curriculum</button>
+<button onclick="show('lab')">Coding Lab</button>
+<button onclick="show('quiz')">Quiz</button>
+<button onclick="show('lib')">Library</button>
+</nav>
+<section id="cur"></section>
+<section id="lab" hidden>
+<h2>Coding Lab (JavaScript, runs locally)</h2>
+<textarea id="code" rows="8">console.log("hello ivy");
+console.log(2 + 3 * 2);</textarea><br/>
+<button onclick="run()">Run</button>
+<pre id="out" aria-live="polite"></pre>
+</section>
+<section id="quiz" hidden>
+<h2>Python Basics Quiz</h2>
+<div id="qs"></div>
+<button onclick="grade()">Submit</button>
+<p id="score" aria-live="polite"></p>
+</section>
+<section id="lib" hidden>
+<h2>Open Library (links)</h2>
+<ul>
+<li><a href="https://cs50.harvard.edu/x/">Harvard CS50</a></li>
+<li><a href="https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/">MIT OCW Python</a></li>
+<li><a href="https://doc.rust-lang.org/book/">The Rust Book</a></li>
+<li><a href="https://developer.mozilla.org/">MDN Web Docs</a></li>
+</ul>
+</section>
+<script>
+const TRACKS=[
+{id:"py-101",t:"Python Basics",d:"variables, loops, functions"},
+{id:"js-101",t:"JS Basics",d:"types, functions, JSON"},
+{id:"rust-101",t:"Rust Basics",d:"ownership, mutability, cargo"},
+{id:"api-101",t:"FastAPI Intro",d:"routes, validation, auth"},
+{id:"react-101",t:"React + TypeScript",d:"components, hooks, fetch"}];
+const QUIZ=[
+{q:"What does print(2 + 3 * 2) output?",c:["10","8","12","7"],a:1},
+{q:"Which keyword defines a function in Python?",c:["func","def","function","lambda-only"],a:1},
+{q:"What is the type of [] in Python?",c:["dict","tuple","list","set"],a:2}];
+const done=JSON.parse(localStorage.getItem("ivy-done")||"[]");
+function show(id){for(const s of["cur","lab","quiz","lib"])document.getElementById(s).hidden=s!==id;}
+document.getElementById("cur").innerHTML="<h2>Curriculum</h2>"+TRACKS.map(t=>
+`<article><h3>${t.t}</h3><p>${t.d}</p>
+<button onclick="complete('${t.id}')">${done.includes(t.id)?"Done ✓":"Mark done"}</button></article>`).join("");
+function complete(id){if(!done.includes(id)){done.push(id);localStorage.setItem("ivy-done",JSON.stringify(done));location.reload();}}
+function run(){const logs=[];try{new Function("console",document.getElementById("code").value)({log:(...a)=>logs.push(a.join(" "))});}catch(e){logs.push("Error: "+e.message);}
+document.getElementById("out").textContent=logs.join("\n")||"(no output)";}
+document.getElementById("qs").innerHTML=QUIZ.map((q,i)=>`<p>${q.q}</p>`+q.c.map((c,j)=>
+`<label><input type="radio" name="q${i}" value="${j}"/> ${c}</label><br/>`).join("")).join("");
+function grade(){let ok=0;QUIZ.forEach((q,i)=>{const el=document.querySelector(`input[name=q${i}]:checked`);if(el&&+el.value===q.a)ok++;});
+document.getElementById("score").textContent=`Score ${Math.round(ok/QUIZ.length*100)}% (${ok}/${QUIZ.length})`;}
+</script>
+</body>
+</html>

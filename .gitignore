@@ -1,0 +1,20 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/.ruff_cache/
+# Node
+frontend/node_modules/
+frontend/dist/
+# Rust
+rust-core/target/
+# Env / secrets
+backend/.env
+frontend/.env
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+*.log
+rust-core/Cargo.lock

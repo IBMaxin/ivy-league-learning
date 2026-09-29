@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ivy Learning — Full Offline App</title>
+<style>
+body{font-family:system-ui;max-width:860px;margin:0 auto;padding:16px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+textarea{width:100%;font-family:monospace}
+pre{background:#f4f4f4;padding:8px;white-space:pre-wrap}
+article{border:1px solid #ddd;padding:8px;margin:8px 0}
+small{color:#555}
+</style>
+</head>
+<body>
+<h1>Ivy Learning — Full Offline App</h1>
+<p id="rec" aria-live="polite"></p>
+<nav>
+<button onclick="show('dash')">Dashboard</button>
+<button onclick="show('cur')">Curriculum</button>
+<button onclick="show('lab')">Coding Lab</button>
+<button onclick="show('studio')">Studio</button>
+<button onclick="show('quiz')">Quiz</button>
+<button onclick="show('lib')">Library</button>
+<button onclick="show('com')">Community</button>
+</nav>
+
+<section id="dash">
+<h2>Dashboard</h2>
+<div id="dashBody"></div>
+</section>
+
+<section id="cur" hidden>
+<h2>Curriculum</h2>
+<div id="curBody"></div>
+</section>
+
+<section id="lab" hidden>
+<h2>Coding Lab</h2>
+<select id="lang" onchange="starter()">
+<option value="javascript">JavaScript (runs here)</option>
+<option value="python">Python (print preview)</option>
+<option value="rust">Rust (analysis)</option>
+</select>
+<textarea id="code" rows="8"></textarea><br/>
+<button onclick="run()">Run</button>
+<pre id="out" aria-live="polite"></pre>
+</section>
+
+<section id="studio" hidden>
+<h2>Full-Stack Studio</h2>
+<h3>Frontend preview</h3>
+<textarea id="html" rows="4"><h1>Hello Ivy</h1></textarea>
+<iframe id="prev" title="preview" sandbox width="100%" height="120"></iframe><br/>
+<button onclick="preview()">Render</button>
+<h3>Backend tester</h3>
+<p><small>Tries <code>http://localhost:8000</code> — start the FastAPI backend to use.</small></p>
+<button onclick="ping()">Ping API</button>
+<pre id="apiOut" aria-live="polite"></pre>
+</section>
+
+<section id="quiz" hidden>
+<h2>Quiz</h2>
+<select id="lesson" onchange="loadQuiz()">
+<option value="py-101">Python Basics</option>
+<option value="js-101">JS Basics</option>
+<option value="rust-101">Rust Basics</option>
+</select>
+<div id="qs"></div>
+<button onclick="grade()">Submit</button>
+<p id="score" aria-live="polite"></p>
+</section>
+
+<section id="lib" hidden>
+<h2>Content Library</h2>
+<input id="lq" oninput="renderLib()" placeholder="Search open courses" />
+<ul id="libList"></ul>
+</section>
+
+<section id="com" hidden>
+<h2>Community</h2>
+<select id="ctrack" onchange="renderPosts()">
+<option value="">All tracks</option>
+<option>general</option><option>cs-fundamentals</option>
+<option>fullstack</option><option>maths</option><option>humanities</option>
+</select>
+<div><input id="ctitle" placeholder="Ask a question" />
+<button onclick="addPost()">Post</button></div>
+<ul id="posts"></ul>
+</section>
+
+<script>
+const ORDER=["py-101","js-101","rust-101","api-101","react-101"];
+const NAMES={"py-101":"Python Basics","js-101":"JS Basics","rust-101":"Rust Basics","api-101":"FastAPI Intro","react-101":"React + TypeScript"};
+const QUIZ={
+"py-101":[{q:"What does print(2 + 3 * 2) output?",c:["10","8","12","7"],a:1},
+{q:"Which keyword defines a function in Python?",c:["func","def","function","lambda-only"],a:1},
+{q:"What is the type of [] in Python?",c:["dict","tuple","list","set"],a:2}],
+"js-101":[{q:"What does '2' + 2 evaluate to?",c:["4","'22'","NaN","TypeError"],a:1},
+{q:"Block-scoped variable keyword?",c:["var","let","def","dim"],a:1},
+{q:"JSON.parse('{\"a\":1}').a equals…",c:["1","'1'","undefined","null"],a:0}],
+"rust-101":[{q:"By default, variables are…",c:["mutable","immutable","global","dynamic"],a:1},
+{q:"Keyword that makes a variable mutable?",c:["mut","letmut","var","mutable"],a:0},
+{q:"What does cargo do?",c:["formats disks","builds/manages Rust projects","runs SQL","edits video"],a:1}]};
+const LIB=[
+["CS50: Intro to Computer Science","Harvard","https://cs50.harvard.edu/x/"],
+["Intro to CS and Programming in Python","MIT OCW","https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/"],
+["Open Yale Courses","Yale","https://oyc.yale.edu/"],
+["Stanford Online","Stanford","https://online.stanford.edu/"],
+["The Rust Programming Language","Rust Project","https://doc.rust-lang.org/book/"],
+["MDN Web Docs","Mozilla","https://developer.mozilla.org/"],
+["FastAPI Documentation","Open","https://fastapi.tiangolo.com/"],
+["Python Tutorial","Python Software Foundation","https://docs.python.org/3/tutorial/"]];
+const store={
+get scores(){return JSON.parse(localStorage.getItem("ivy-scores")||"{}");},
+set scores(v){localStorage.setItem("ivy-scores",JSON.stringify(v));},
+get posts(){return JSON.parse(localStorage.getItem("ivy-posts")||'[{"t":"Welcome — introduce yourself","a":"ivy-mentor","k":"general"}]');},
+set posts(v){localStorage.setItem("ivy-posts",JSON.stringify(v));}};
+function mastery(){const s=store.scores,o={};for(const k in s)o[k]=s[k].reduce((a,b)=>a+b,0)/s[k].length;return o;}
+function recommend(){const m=mastery();
+const weak=Object.entries(m).filter(([_,v])=>v<70).sort((a,b)=>a[1]-b[1]);
+if(weak.length)return{mode:"review",id:weak[0][0],why:`Mastery ${Math.round(weak[0][1])}% < 70% — review ${NAMES[weak[0][0]]}.`};
+const done=Object.keys(m).filter(k=>m[k]>=70);
+const next=ORDER.find(id=>!done.includes(id));
+return next?{mode:"next",id:next,why:`Next in sequence: ${NAMES[next]}.`}:{mode:"done",id:null,why:"All lessons complete."};}
+function renderDash(){const m=mastery(),r=recommend();
+document.getElementById("rec").textContent="Recommended: "+(r.id?NAMES[r.id]:"—")+" — "+r.why;
+document.getElementById("dashBody").innerHTML="<p>"+r.why+"</p><ul>"+
+ORDER.map(id=>`<li>${NAMES[id]} — ${m[id]!==undefined?Math.round(m[id])+"%":"not attempted"}</li>`).join("")+"</ul>";}
+function show(id){for(const s of["dash","cur","lab","studio","quiz","lib","com"])document.getElementById(s).hidden=s!==id;
+if(id==="dash")renderDash();}
+document.getElementById("curBody").innerHTML=ORDER.map(id=>
+`<article><h3>${NAMES[id]}</h3><button onclick="location.hash='';show('quiz');document.getElementById('lesson').value='${id}';loadQuiz();">Take quiz</button></article>`).join("");
+const START={javascript:'console.log("hello ivy");',python:'print("hello ivy")',rust:'fn main() {\n    println!("hello ivy");\n}'};
+function starter(){document.getElementById("code").value=START[document.getElementById("lang").value];}
+starter();
+function run(){const l=document.getElementById("lang").value,c=document.getElementById("code").value,o=document.getElementById("out");
+if(l==="javascript"){const logs=[];try{new Function("console",c)({log:(...a)=>logs.push(a.join(" "))});}catch(e){logs.push("Error: "+e.message);}o.textContent=logs.join("\n")||"(no output)";}
+else if(l==="python"){const out=[];for(const line of c.split("\n")){const m=line.match(/^\s*print\((.*)\)\s*$/);if(m){try{out.push(String(new Function("return ("+m[1]+");")()));}catch{out.push(m[1]);}}}o.textContent=out.join("\n")||"Browser preview shows print() output only.";}
+else{o.textContent=`Rust: ${c.split("\n").length} lines. ${/\bunsafe\b/.test(c)?"Contains unsafe — review ownership.":"No unsafe detected."} Compile with cargo run locally.`;}}
+function preview(){document.getElementById("prev").srcdoc=document.getElementById("html").value;}
+async function ping(){try{const h=await(await fetch("http://localhost:8000/health")).json();
+const c=await(await fetch("http://localhost:8000/api/curriculum")).json();
+document.getElementById("apiOut").textContent=`health=${h.status} tracks=${c.tracks.length}`;}
+catch{document.getElementById("apiOut").textContent="Backend offline — start it with: uv run --frozen uvicorn app.main:app";}}
+function loadQuiz(){const id=document.getElementById("lesson").value;
+document.getElementById("qs").innerHTML=QUIZ[id].map((q,i)=>`<p>${q.q}</p>`+q.c.map((c,j)=>
+`<label><input type="radio" name="q${i}" value="${j}"/> ${c}</label><br/>`).join("")).join("");}
+loadQuiz();
+function grade(){const id=document.getElementById("lesson").value;let ok=0;
+QUIZ[id].forEach((q,i)=>{const el=document.querySelector(`input[name=q${i}]:checked`);if(el&&+el.value===q.a)ok++;});
+const pct=Math.round(ok/QUIZ[id].length*100);const s=store.scores;s[id]=(s[id]||[]).concat([pct]);store.scores=s;
+const r=recommend();document.getElementById("score").textContent=`Score ${pct}% — ${r.why}`;renderDash();}
+function renderLib(){const q=document.getElementById("lq").value.toLowerCase();
+document.getElementById("libList").innerHTML=LIB.filter(([t,u])=>(t+u).toLowerCase().includes(q))
+.map(([t,u,url])=>`<li><a href="${url}" target="_blank" rel="noreferrer">${t}</a> — ${u}</li>`).join("");}
+renderLib();
+function renderPosts(){const k=document.getElementById("ctrack").value;
+document.getElementById("posts").innerHTML=store.posts.filter(p=>!k||p.k===k)
+.map(p=>`<li><strong>${p.t}</strong> — ${p.a} <small>[${p.k}]</small></li>`).join("");}
+renderPosts();
+function addPost(){const t=document.getElementById("ctitle").value.trim();if(!t)return;
+const p=store.posts;p.push({t,a:"learner",k:document.getElementById("ctrack").value||"general"});store.posts=p;
+document.getElementById("ctitle").value="";renderPosts();}
+renderDash();
+</script>
+</body>
+</html>
