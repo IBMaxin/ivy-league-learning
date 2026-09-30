@@ -107,6 +107,30 @@ TRACKS: list[dict] = [
             },
         ],
     },
+    {
+        "id": "algorithms",
+        "title": "Algorithms & Data Structures",
+        "level": "intermediate",
+        "description": "Complexity, sorting, and core data structures.",
+        "lessons": [
+            {
+                "id": "algs-101",
+                "title": "Algorithm Complexity & Sorting",
+                "language": "python",
+                "duration_min": 60,
+                "objectives": ["big-o", "sorting", "search"],
+                "source": "See /api/library entries for open links",
+            },
+            {
+                "id": "ds-101",
+                "title": "Data Structures",
+                "language": "python",
+                "duration_min": 60,
+                "objectives": ["arrays", "hash-maps", "queues-stacks"],
+                "source": "See /api/library entries for open links",
+            },
+        ],
+    },
 ]
 
 LESSON_ORDER: list[dict] = [
@@ -119,6 +143,8 @@ LESSON_ORDER: list[dict] = [
     {"id": "stats-101", "track": "maths", "title": "Statistics Basics"},
     {"id": "hum-101", "track": "humanities", "title": "Critical Reading"},
     {"id": "writing-101", "track": "humanities", "title": "Academic Writing"},
+    {"id": "algs-101", "track": "algorithms", "title": "Algorithm Complexity & Sorting"},
+    {"id": "ds-101", "track": "algorithms", "title": "Data Structures"},
 ]
 
 LIBRARY: list[dict] = [
@@ -241,6 +267,22 @@ LIBRARY: list[dict] = [
         "type": "collection",
         "level": "all",
         "url": "https://www.gutenberg.org/",
+    },
+    {
+        "id": "visualgo",
+        "title": "Visualising Data Structures and Algorithms",
+        "university": "Open (National University of Singapore)",
+        "type": "interactive",
+        "level": "intermediate",
+        "url": "https://visualgo.net/",
+    },
+    {
+        "id": "khan-algorithms",
+        "title": "Algorithms",
+        "university": "Khan Academy (Open)",
+        "type": "course",
+        "level": "intermediate",
+        "url": "https://www.khanacademy.org/computing/computer-science/algorithms",
     },
 ]
 
@@ -377,6 +419,40 @@ QUIZZES: dict[str, list[dict]] = {
             "Revision focuses on…",
             ["fonts first", "ideas, structure, clarity", "file names", "word count only"],
             1,
+        ),
+    ],
+    "algs-101": [
+        _qa(
+            "Big-O of linear search over n items is…",
+            ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+            2,
+        ),
+        _qa(
+            "Which sort averages O(n log n)?",
+            ["bubble sort", "insertion sort", "merge sort", "selection sort"],
+            2,
+        ),
+        _qa(
+            "O(log n) time typically comes from…",
+            ["scanning every item", "halving the problem", "nested loops", "random sampling"],
+            1,
+        ),
+    ],
+    "ds-101": [
+        _qa(
+            "Hash map lookup averages…",
+            ["O(1)", "O(n)", "O(log n)", "O(n²)"],
+            0,
+        ),
+        _qa(
+            "A stack is…",
+            ["FIFO", "LIFO", "sorted", "random"],
+            1,
+        ),
+        _qa(
+            "Array index access by position is…",
+            ["O(1)", "O(n)", "O(log n)", "O(n log n)"],
+            0,
         ),
     ],
 }

@@ -72,6 +72,8 @@ small{color:#555}
 <option value="stats-101">Statistics Basics</option>
 <option value="hum-101">Critical Reading</option>
 <option value="writing-101">Academic Writing</option>
+<option value="algs-101">Complexity & Sorting</option>
+<option value="ds-101">Data Structures</option>
 </select>
 <div id="qs"></div>
 <button onclick="grade()">Submit</button>
@@ -89,7 +91,7 @@ small{color:#555}
 <select id="ctrack" onchange="renderPosts()">
 <option value="">All tracks</option>
 <option>general</option><option>cs-fundamentals</option>
-<option>fullstack</option><option>maths</option><option>humanities</option>
+<option>fullstack</option><option>maths</option><option>humanities</option><option>algorithms</option>
 </select>
 <div><input id="ctitle" placeholder="Ask a question" />
 <button onclick="addPost()">Post</button></div>
@@ -97,8 +99,8 @@ small{color:#555}
 </section>
 
 <script>
-const ORDER=["py-101","js-101","rust-101","api-101","react-101","maths-101","stats-101","hum-101","writing-101"];
-const NAMES={"py-101":"Python Basics","js-101":"JS Basics","rust-101":"Rust Basics","api-101":"FastAPI Intro","react-101":"React + TypeScript","maths-101":"Algebra Basics","stats-101":"Statistics Basics","hum-101":"Critical Reading","writing-101":"Academic Writing"};
+const ORDER=["py-101","js-101","rust-101","api-101","react-101","maths-101","stats-101","hum-101","writing-101","algs-101","ds-101"];
+const NAMES={"py-101":"Python Basics","js-101":"JS Basics","rust-101":"Rust Basics","api-101":"FastAPI Intro","react-101":"React + TypeScript","maths-101":"Algebra Basics","stats-101":"Statistics Basics","hum-101":"Critical Reading","writing-101":"Academic Writing","algs-101":"Complexity & Sorting","ds-101":"Data Structures"};
 const QUIZ={
 "py-101":[{q:"What does print(2 + 3 * 2) output?",c:["10","8","12","7"],a:1},
 {q:"Which keyword defines a function in Python?",c:["func","def","function","lambda-only"],a:1},
@@ -126,7 +128,13 @@ const QUIZ={
 {q:"Context in analysis means…",c:["word count","historical/cultural background","font choice","page size"],a:1}],
 "writing-101":[{q:"An academic paragraph usually has…",c:["one idea, structured","five topics","no evidence","only quotes"],a:0},
 {q:"Citations exist to…",c:["pad length","credit sources","hide ideas","avoid conclusions"],a:1},
-{q:"Revision focuses on…",c:["fonts first","ideas, structure, clarity","file names","word count only"],a:1}]};
+{q:"Revision focuses on…",c:["fonts first","ideas, structure, clarity","file names","word count only"],a:1}],
+"algs-101":[{q:"Big-O of linear search over n items is…",c:["O(1)","O(log n)","O(n)","O(n²)"],a:2},
+{q:"Which sort averages O(n log n)?",c:["bubble sort","insertion sort","merge sort","selection sort"],a:2},
+{q:"O(log n) time typically comes from…",c:["scanning every item","halving the problem","nested loops","random sampling"],a:1}],
+"ds-101":[{q:"Hash map lookup averages…",c:["O(1)","O(n)","O(log n)","O(n²)"],a:0},
+{q:"A stack is…",c:["FIFO","LIFO","sorted","random"],a:1},
+{q:"Array index access by position is…",c:["O(1)","O(n)","O(log n)","O(n log n)"],a:0}]};
 const LIB=[
 ["CS50: Intro to Computer Science","Harvard","https://cs50.harvard.edu/x/"],
 ["Intro to CS and Programming in Python","MIT OCW","https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/"],
@@ -138,7 +146,9 @@ const LIB=[
 ["Python Tutorial","Python Software Foundation","https://docs.python.org/3/tutorial/"],
 ["Algebra 1","Khan Academy","https://www.khanacademy.org/math/algebra"],
 ["Statistics and Probability","Khan Academy","https://www.khanacademy.org/math/statistics-probability"],
-["Project Gutenberg Ebooks","Public Domain","https://www.gutenberg.org/"]];
+["Project Gutenberg Ebooks","Public Domain","https://www.gutenberg.org/"],
+["Visualising Data Structures and Algorithms","Open (NUS)","https://visualgo.net/"],
+["Algorithms","Khan Academy","https://www.khanacademy.org/computing/computer-science/algorithms"]];
 const store={
 get scores(){return JSON.parse(localStorage.getItem("ivy-scores")||"{}");},
 set scores(v){localStorage.setItem("ivy-scores",JSON.stringify(v));},

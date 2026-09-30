@@ -19,7 +19,7 @@ def test_curriculum_shape():
     r = client.get("/api/curriculum")
     assert r.status_code == 200
     tracks = r.json()["tracks"]
-    assert len(tracks) == 4
+    assert len(tracks) == 5
     lessons = [lesson["id"] for t in tracks for lesson in t["lessons"]]
     assert {
         "py-101",
@@ -31,6 +31,8 @@ def test_curriculum_shape():
         "stats-101",
         "hum-101",
         "writing-101",
+        "algs-101",
+        "ds-101",
     } <= set(lessons)
 
 
@@ -121,6 +123,28 @@ def test_new_tracks_quiz_submit_and_recommend():
         assert r.status_code == 200
         assert r.json()["score"] == 100.0
     rec = client.get("/api/adaptive/recommend/fresh-learner", headers=auth).json()
+    assert rec["recommendation"]["lesson_id"] == "py-101"
+
+
+def test_algorithms_track_quiz_submit():
+    auth = _auth("algs-learner")
+    for lesson_id, answers in [
+        ("algs-101", [2, 2, 1]),
+        ("ds-101", [0, 1, 0]),
+    ]:
+        q = client.get(f"/api/quiz/{lesson_id}")
+        assert q.status_code == 200
+        assert len(q.json()["questions"]) == 3
+        for item in q.json()["questions"]:
+            assert "answer" not in item
+        r = client.post(
+            "/api/quiz/submit",
+            json={"user_id": "algs-learner", "lesson_id": lesson_id, "answers": answers},
+            headers=auth,
+        )
+        assert r.status_code == 200
+        assert r.json()["score"] == 100.0
+    rec = client.get("/api/adaptive/recommend/algs-learner", headers=auth).json()
     assert rec["recommendation"]["lesson_id"] == "py-101"
 
 
