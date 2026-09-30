@@ -59,3 +59,18 @@ def test_run_lab_recursion_and_slicing():
     out = run_lab(last, [{"input": "get_last([1, 2, 3])", "expected": 3}])
     assert out["ok"] is True
     assert out["results"][0]["passed"] is True
+
+
+def test_run_lab_caps_test_expression_cost():
+    big = "square(" + "9" * 600 + ")"
+    outcome = run_lab(SQUARE, [{"input": big, "expected": 4}])
+    assert outcome["ok"] is True
+    assert outcome["results"][0]["passed"] is False
+    assert "too large" in outcome["results"][0]["error"]
+
+
+def test_run_lab_caps_test_count():
+    cases = [{"input": "square(2)", "expected": 4}] * 30
+    outcome = run_lab(SQUARE, cases)
+    assert outcome["ok"] is True
+    assert len(outcome["results"]) == 20

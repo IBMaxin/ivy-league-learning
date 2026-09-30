@@ -286,6 +286,8 @@ class _Return(Exception):
 _LAB_BUILTINS = ("range", "len", "str", "int", "float", "abs", "bool")
 _LAB_MAX_DEPTH = 50
 _LAB_MAX_CODE = 10_000
+_LAB_MAX_TEST_EXPR = 500
+_LAB_MAX_TESTS = 20
 
 
 class _LabRunner(_Runner):
@@ -480,9 +482,19 @@ def run_lab(code: str, test_cases: list[dict]) -> dict:
     except SandboxError as e:
         return {"ok": False, "error": f"Stopped: {e}"}
     results: list[dict] = []
-    for test in test_cases:
+    for test in test_cases[:_LAB_MAX_TESTS]:
         expr = test["input"]
         expected = test["expected"]
+        if not isinstance(expr, str) or len(expr) > _LAB_MAX_TEST_EXPR:
+            results.append(
+                {
+                    "input": str(expr)[:100],
+                    "expected": expected,
+                    "passed": False,
+                    "error": "bad test: expression too large",
+                }
+            )
+            continue
         try:
             test_tree = ast.parse(expr, mode="eval")
         except SyntaxError as e:
