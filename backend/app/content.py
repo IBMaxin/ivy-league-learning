@@ -131,7 +131,40 @@ TRACKS: list[dict] = [
             },
         ],
     },
+    {
+        "id": "systems",
+        "title": "Computer Systems",
+        "level": "intermediate",
+        "description": "OS, Networking, and Database internals.",
+        "lessons": [
+            {
+                "id": "os-101",
+                "title": "Operating Systems",
+                "language": "python",
+                "duration_min": 60,
+                "objectives": ["processes", "memory", "scheduling"],
+                "source": "See /api/library entries for open links",
+            },
+            {
+                "id": "net-101",
+                "title": "Computer Networking",
+                "language": "python",
+                "duration_min": 60,
+                "objectives": ["osi-model", "tcp-udp", "dns"],
+                "source": "See /api/library entries for open links",
+            },
+            {
+                "id": "db-101",
+                "title": "Database Theory",
+                "language": "python",
+                "duration_min": 60,
+                "objectives": ["normalization", "indexing", "acid"],
+                "source": "See /api/library entries for open links",
+            },
+        ],
+    },
 ]
+
 
 LESSON_ORDER: list[dict] = [
     {"id": "py-101", "track": "cs-fundamentals", "title": "Python Basics"},
@@ -145,7 +178,11 @@ LESSON_ORDER: list[dict] = [
     {"id": "writing-101", "track": "humanities", "title": "Academic Writing"},
     {"id": "algs-101", "track": "algorithms", "title": "Algorithm Complexity & Sorting"},
     {"id": "ds-101", "track": "algorithms", "title": "Data Structures"},
+    {"id": "os-101", "track": "systems", "title": "Operating Systems"},
+    {"id": "net-101", "track": "systems", "title": "Computer Networking"},
+    {"id": "db-101", "track": "systems", "title": "Database Theory"},
 ]
+
 
 LIBRARY: list[dict] = [
     {
@@ -284,7 +321,32 @@ LIBRARY: list[dict] = [
         "level": "intermediate",
         "url": "https://www.khanacademy.org/computing/computer-science/algorithms",
     },
+    {
+        "id": "mit-6s081",
+        "title": "Operating System Engineering",
+        "university": "MIT OCW",
+        "type": "course",
+        "level": "intermediate",
+        "url": "https://ocw.mit.edu/courses/6-s081-operating-system-engineering-fall-2018/",
+    },
+    {
+        "id": "stanford-net",
+        "title": "Computer Networking",
+        "university": "Stanford Online",
+        "type": "course",
+        "level": "intermediate",
+        "url": "https://online.stanford.edu/courses/cs144-introduction-computer-networking",
+    },
+    {
+        "id": "cm-db",
+        "title": "Database Systems",
+        "university": "Carnegie Mellon",
+        "type": "course",
+        "level": "intermediate",
+        "url": "https://db.cs.cmu.edu/courses/",
+    },
 ]
+
 
 
 def _qa(q: str, choices: list[str], answer: int) -> dict:
@@ -455,4 +517,56 @@ QUIZZES: dict[str, list[dict]] = {
             0,
         ),
     ],
+    "os-101": [
+        _qa(
+            "The process of saving the state of a CPU to switch tasks is…",
+            ["paging", "context switching", "scheduling", "pipelining"],
+            1,
+        ),
+        _qa(
+            "A deadlock occurs when processes…",
+            ["finish too fast", "wait indefinitely for each other's resources", "share memory", "use threads"],
+            1,
+        ),
+        _qa(
+            "Virtual memory primarily solves…",
+            ["CPU speed", "limited physical RAM", "disk latency", "network lag"],
+            1,
+        ),
+    ],
+    "net-101": [
+        _qa(
+            "Which layer of the OSI model handles routing?",
+            ["Physical", "Data Link", "Network", "Transport"],
+            2,
+        ),
+        _qa(
+            "TCP is considered…",
+            ["connectionless", "connection-oriented", "stateless", "UDP-based"],
+            1,
+        ),
+        _qa(
+            "DNS translates a domain name to…",
+            ["an HTML file", "an IP address", "a MAC address", "a port number"],
+            1,
+        ),
+    ],
+    "db-101": [
+        _qa(
+            "3NF (Third Normal Form) primarily aims to remove…",
+            ["duplicate rows", "transitive dependencies", "primary keys", "all indexes"],
+            1,
+        ),
+        _qa(
+            "ACID properties ensure…",
+            ["fast reads", "database reliability and consistency", "no locks", "UI responsiveness"],
+            1,
+        ),
+        _qa(
+            "A B-Tree index improves…",
+            ["write speed", "search/range query performance", "storage space", "CPU cache"],
+            1,
+        ),
+    ],
 }
+

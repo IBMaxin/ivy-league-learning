@@ -74,6 +74,9 @@ small{color:#555}
 <option value="writing-101">Academic Writing</option>
 <option value="algs-101">Complexity & Sorting</option>
 <option value="ds-101">Data Structures</option>
+<option value="os-101">Operating Systems</option>
+<option value="net-101">Computer Networking</option>
+<option value="db-101">Database Theory</option>
 </select>
 <div id="qs"></div>
 <button onclick="grade()">Submit</button>
@@ -99,8 +102,8 @@ small{color:#555}
 </section>
 
 <script>
-const ORDER=["py-101","js-101","rust-101","api-101","react-101","maths-101","stats-101","hum-101","writing-101","algs-101","ds-101"];
-const NAMES={"py-101":"Python Basics","js-101":"JS Basics","rust-101":"Rust Basics","api-101":"FastAPI Intro","react-101":"React + TypeScript","maths-101":"Algebra Basics","stats-101":"Statistics Basics","hum-101":"Critical Reading","writing-101":"Academic Writing","algs-101":"Complexity & Sorting","ds-101":"Data Structures"};
+const ORDER=["py-101","js-101","rust-101","api-101","react-101","maths-101","stats-101","hum-101","writing-101","algs-101","ds-101","os-101","net-101","db-101"];
+const NAMES={"py-101":"Python Basics","js-101":"JS Basics","rust-101":"Rust Basics","api-101":"FastAPI Intro","react-101":"React + TypeScript","maths-101":"Algebra Basics","stats-101":"Statistics Basics","hum-101":"Critical Reading","writing-101":"Academic Writing","algs-101":"Complexity & Sorting","ds-101":"Data Structures","os-101":"Operating Systems","net-101":"Computer Networking","db-101":"Database Theory"};
 const QUIZ={
 "py-101":[{q:"What does print(2 + 3 * 2) output?",c:["10","8","12","7"],a:1},
 {q:"Which keyword defines a function in Python?",c:["func","def","function","lambda-only"],a:1},
@@ -134,7 +137,16 @@ const QUIZ={
 {q:"O(log n) time typically comes from…",c:["scanning every item","halving the problem","nested loops","random sampling"],a:1}],
 "ds-101":[{q:"Hash map lookup averages…",c:["O(1)","O(n)","O(log n)","O(n²)"],a:0},
 {q:"A stack is…",c:["FIFO","LIFO","sorted","random"],a:1},
-{q:"Array index access by position is…",c:["O(1)","O(n)","O(log n)","O(n log n)"],a:0}]};
+{q:"Array index access by position is…",c:["O(1)","O(n)","O(log n)","O(n log n)"],a:0}],
+"os-101":[{q:"Saving CPU state to switch tasks is…",c:["paging","context switching","scheduling","pipelining"],a:1},
+{q:"Deadlock occurs when processes…",c:["finish fast","wait for each other","share memory","use threads"],a:1},
+{q:"Virtual memory solves…",c:["CPU speed","limited RAM","disk latency","network lag"],a:1}],
+"net-101":[{q:"OSI layer for routing?",c:["Physical","Data Link","Network","Transport"],a:2},
+{q:"TCP is…",c:["connectionless","connection-oriented","stateless","UDP-based"],a:1},
+{q:"DNS translates domain to…",c:["HTML","IP address","MAC address","port"],a:1}],
+"db-101":[{q:"3NF removes…",c:["duplicate rows","transitive dependencies","primary keys","indexes"],a:1},
+{q:"ACID ensures…",c:["fast reads","reliability/consistency","no locks","UI response"],a:1},
+{q:"B-Tree index improves…",c:["write speed","search performance","storage","CPU cache"],a:1}]};
 const LIB=[
 ["CS50: Intro to Computer Science","Harvard","https://cs50.harvard.edu/x/"],
 ["Intro to CS and Programming in Python","MIT OCW","https://ocw.mit.edu/courses/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/"],
@@ -148,7 +160,10 @@ const LIB=[
 ["Statistics and Probability","Khan Academy","https://www.khanacademy.org/math/statistics-probability"],
 ["Project Gutenberg Ebooks","Public Domain","https://www.gutenberg.org/"],
 ["Visualising Data Structures and Algorithms","Open (NUS)","https://visualgo.net/"],
-["Algorithms","Khan Academy","https://www.khanacademy.org/computing/computer-science/algorithms"]];
+["Algorithms","Khan Academy","https://www.khanacademy.org/computing/computer-science/algorithms"],
+["OS Engineering","MIT OCW","https://ocw.mit.edu/courses/6-s081-operating-system-engineering-fall-2018/"],
+["Computer Networking","Stanford Online","https://online.stanford.edu/courses/cs144-introduction-computer-networking"],
+["Database Systems","CMU","https://db.cs.cmu.edu/courses/"]];
 const store={
 get scores(){return JSON.parse(localStorage.getItem("ivy-scores")||"{}");},
 set scores(v){localStorage.setItem("ivy-scores",JSON.stringify(v));},

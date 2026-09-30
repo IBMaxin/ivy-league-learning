@@ -43,6 +43,9 @@ export default function Quiz() {
         <option value="writing-101">Academic Writing</option>
         <option value="algs-101">Complexity & Sorting</option>
         <option value="ds-101">Data Structures</option>
+        <option value="os-101">Operating Systems</option>
+        <option value="net-101">Computer Networking</option>
+        <option value="db-101">Database Theory</option>
       </select>{" "}
       <button onClick={() => void load()}>Load quiz</button>
       {qs.map((q, i) => (
