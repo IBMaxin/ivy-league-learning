@@ -46,7 +46,7 @@ Storage: SQLite file locally (`ivy.db`), Postgres via `IVY_DATABASE_URL`
 | `validate.rs` | Submission validation |
 
 Mirrors `services.py` logic (70% mastery threshold, quiz grading to 1 decimal,
-pace cutoffs at 5/10 attempts); the two must agree.
+pace cutoffs at 5/10 attempts, lab pass-flag scoring via `score_lab`); the two must agree.
 
 ## Data flow (quiz submit)
 

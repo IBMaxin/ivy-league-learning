@@ -57,6 +57,18 @@ pub fn pace_for(attempts: usize) -> &'static str {
     }
 }
 
+/// Score lab test outcomes: count passes, percent to one decimal.
+/// Mirrors services.validate_lab scoring (execution itself stays in
+/// sandbox.run_lab; only the pass-flag math is mirrored here).
+pub fn score_lab(passed: &[bool]) -> (usize, usize, f32) {
+    if passed.is_empty() {
+        return (0, 0, 0.0);
+    }
+    let correct = passed.iter().filter(|&&b| b).count();
+    let pct = correct as f32 / passed.len() as f32 * 100.0;
+    (correct, passed.len(), (pct * 10.0).round() / 10.0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,5 +95,12 @@ mod tests {
         assert_eq!(pace_for(5), "building");
         assert_eq!(pace_for(9), "building");
         assert_eq!(pace_for(10), "accelerated");
+    }
+    #[test]
+    fn scores_lab_outcomes() {
+        assert_eq!(score_lab(&[true, true, true]), (3, 3, 100.0));
+        assert_eq!(score_lab(&[true, false, false]), (1, 3, 33.3));
+        assert_eq!(score_lab(&[false, false]), (0, 2, 0.0));
+        assert_eq!(score_lab(&[]), (0, 0, 0.0));
     }
 }
