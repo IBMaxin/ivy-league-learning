@@ -56,6 +56,18 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8000/api/auth/token `
 - `IVY_JWT_ISSUER` (default `ivy-dev`), `IVY_JWT_AUDIENCE` (default `ivy-learners`), `IVY_JWT_EXP_MINUTES` (default `60`).
 - Frontend stores the token as `ivy-token` in `localStorage` and auto-refreshes on 401.
 
+## Labs (graded challenges)
+
+```powershell
+cd backend
+$t = (Invoke-RestMethod -Method Post -Uri http://localhost:8000/api/auth/token `
+  -ContentType 'application/json' -Body '{"user_id":"dev-user"}').access_token
+Invoke-RestMethod -Headers @{Authorization="Bearer $t"} `
+  -Uri http://localhost:8000/api/lab/py-101
+```
+
+Full contract, safety model, and authoring guide: [`docs/labs.md`](labs.md).
+
 ## Frontend
 
 ```powershell

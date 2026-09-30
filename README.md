@@ -11,7 +11,7 @@ in-browser coding, full-stack studio, open-course library, community.
 | `frontend/` | React + Vite SPA | `frontend/README.md` |
 | `rust-core/` | Learning-math crate | `rust-core/README.md` |
 | `Interactive Tool/` | Zero-install single-file demos | `Interactive Tool/README.md` |
-| `docs/` | Setup + architecture | `docs/setup.md`, `docs/architecture.md` |
+| `docs/` | Setup + architecture + lab authoring | `docs/setup.md`, `docs/architecture.md`, `docs/labs.md` |
 
 ## Quickstart
 

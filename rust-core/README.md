@@ -7,7 +7,7 @@ Small logic crate. Re-exports only at the root; logic lives in modules.
 | Path | Concern |
 |---|---|
 | `src/lib.rs` | Re-exports only |
-| `src/mastery.rs` | Score averaging + next-lesson recommendation |
+| `src/mastery.rs` | Score averaging + next-lesson recommendation + quiz/lab scoring |
 | `src/validate.rs` | Code-submission validation (language, size) |
 
 ## Commands (run in `rust-core/`)
