@@ -18,6 +18,7 @@ def _auth(user_id: str = "dev-user") -> dict[str, str]:
 
 AUTH = _auth()
 SQUARE = "def square(n):\n    return n * n\n"
+GET_LAST = "def get_last(stack):\n    return stack[-1]\n"
 
 
 def test_lab_get_requires_auth():
@@ -52,7 +53,35 @@ def test_lab_submit_roundtrip_shape():
     assert r.status_code == 200
     body = r.json()
     assert body["success"] is True
+    assert body["score"] == 100.0
     assert isinstance(body["results"], list)
+
+
+def test_lab_submit_records_progress_for_caller():
+    auth = {"Authorization": f"Bearer {create_access_token('lab-learner')}"}
+    r = client.post(
+        "/api/lab/submit", json={"lesson_id": "ds-101", "code": GET_LAST}, headers=auth
+    )
+    assert r.status_code == 200
+    assert r.json()["success"] is True
+    progress = client.get("/api/progress/lab-learner", headers=auth).json()
+    assert any(
+        p["lesson_id"] == "ds-101" and p["score"] == 100.0 and p["completed"]
+        for p in progress
+    )
+    # Failed attempts are recorded too, mirroring quiz submit scoring.
+    bad = client.post(
+        "/api/lab/submit",
+        json={"lesson_id": "ds-101", "code": "def get_last(stack):\n    return None\n"},
+        headers=auth,
+    )
+    assert bad.status_code == 200
+    assert bad.json()["success"] is False
+    progress = client.get("/api/progress/lab-learner", headers=auth).json()
+    assert any(
+        p["lesson_id"] == "ds-101" and p["score"] == 0.0 and not p["completed"]
+        for p in progress
+    )
 
 
 def test_lab_submit_status_codes():

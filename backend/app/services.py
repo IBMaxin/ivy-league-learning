@@ -61,8 +61,9 @@ def validate_lab(lesson_id: str, code: str) -> dict:
     """Score user code against lab fixtures. Pure orchestration over plain data.
 
     Execution lives in sandbox.run_lab (allowlisted AST only, never exec).
-    Returns {"success": bool, "results": [...]} or {"success": False, "error": ...}
-    for unknown labs; syntax/definition failures surface as success=False results.
+    Returns {"success", "score", "correct", "total", "results"} or
+    {"success": False, "error": ...} for unknown labs. Definition failures
+    (syntax/blocked construct) score 0 with empty results.
     """
     from .content import LABS
     from .sandbox import run_lab
@@ -70,8 +71,24 @@ def validate_lab(lesson_id: str, code: str) -> dict:
     if lesson_id not in LABS:
         return {"success": False, "error": "Lab not found"}
     lab = LABS[lesson_id]
+    total = len(lab["test_cases"])
     outcome = run_lab(code, lab["test_cases"])
     if not outcome.get("ok"):
-        return {"success": False, "results": [], "error": outcome.get("error", "lab failed")}
+        return {
+            "success": False,
+            "score": 0.0,
+            "correct": 0,
+            "total": total,
+            "results": [],
+            "error": outcome.get("error", "lab failed"),
+        }
     results = outcome["results"]
-    return {"success": all(r.get("passed") for r in results), "results": results}
+    correct = sum(1 for r in results if r.get("passed"))
+    score = round(correct / total * 100.0, 1) if total else 0.0
+    return {
+        "success": all(r.get("passed") for r in results),
+        "score": score,
+        "correct": correct,
+        "total": total,
+        "results": results,
+    }
