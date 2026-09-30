@@ -135,6 +135,16 @@ export const api = {
       body: JSON.stringify({ user_id, lesson_id, answers }),
     });
   },
+  getLab: (id: string) =>
+    authed<{ lesson_id: string; prompt: string; test_cases: LabTest[] }>(
+      `/api/lab/${encodeURIComponent(id)}`,
+    ),
+  submitLab: (payload: { lesson_id: string; code: string }) => {
+    return authed<{ success: boolean; results: LabResult[] }>(`/api/lab/submit`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
   recommend: () => {
     const user_id = requireUser();
     return authed<{ recommendation: Rec; completed: string[] }>(
@@ -204,3 +214,14 @@ export interface Post {
   track: string;
 }
 export type PostInput = Omit<Post, "id" | "author">;
+export interface LabTest {
+  input: string;
+  expected: any;
+}
+export interface LabResult {
+  input: string;
+  expected: any;
+  actual?: any;
+  passed: boolean;
+  error?: string;
+}
