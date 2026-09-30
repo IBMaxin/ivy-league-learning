@@ -46,6 +46,18 @@ small{color:#555}
 <textarea id="code" rows="8"></textarea><br/>
 <button onclick="run()">Run</button>
 <pre id="out" aria-live="polite"></pre>
+<h3>Validated challenges</h3>
+<p><small>Uses the live backend at <code>http://localhost:8000</code> — graded by the same safe validator as the API.</small></p>
+<select id="labLesson">
+<option value="py-101">Python Basics: Square</option>
+<option value="algs-101">Algorithms: Palindrome</option>
+<option value="ds-101">Data Structures: Stack Top</option>
+</select>
+<button onclick="loadLab()">Load challenge</button>
+<p id="labPrompt" aria-live="polite"></p>
+<textarea id="labCode" rows="6" placeholder="Write your function here…"></textarea><br/>
+<button onclick="submitLab()">Submit to validator</button>
+<pre id="labOut" aria-live="polite"></pre>
 </section>
 
 <section id="studio" hidden>
@@ -192,6 +204,25 @@ if(l==="javascript"){const logs=[];try{new Function("console",c)({log:(...a)=>lo
 else if(l==="python"){const out=[];for(const line of c.split("\n")){const m=line.match(/^\s*print\((.*)\)\s*$/);if(m){try{out.push(String(new Function("return ("+m[1]+");")()));}catch{out.push(m[1]);}}}o.textContent=out.join("\n")||"Browser preview shows print() output only.";}
 else{o.textContent=`Rust: ${c.split("\n").length} lines. ${/\bunsafe\b/.test(c)?"Contains unsafe — review ownership.":"No unsafe detected."} Compile with cargo run locally.`;}}
 function preview(){document.getElementById("prev").srcdoc=document.getElementById("html").value;}
+async function labToken(){const r=await fetch("http://localhost:8000/api/auth/token",
+{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:"demo-learner"})});
+if(!r.ok)throw new Error("auth "+r.status);return (await r.json()).access_token;}
+async function loadLab(){const o=document.getElementById("labOut");o.textContent="Loading…";
+try{const t=await labToken();const id=document.getElementById("labLesson").value;
+const r=await fetch("http://localhost:8000/api/lab/"+id,{headers:{Authorization:"Bearer "+t}});
+if(!r.ok)throw new Error("lab "+r.status);const d=await r.json();
+document.getElementById("labPrompt").textContent="Challenge: "+d.prompt;
+document.getElementById("labCode").value="";o.textContent="Test cases: "+d.test_cases.map(x=>x.input).join(", ");}
+catch{ o.textContent="Backend offline — start it with: uv run --frozen uvicorn app.main:app";}}
+async function submitLab(){const o=document.getElementById("labOut");o.textContent="Validating…";
+try{const t=await labToken();
+const r=await fetch("http://localhost:8000/api/lab/submit",{method:"POST",
+headers:{"Content-Type":"application/json",Authorization:"Bearer "+t},
+body:JSON.stringify({lesson_id:document.getElementById("labLesson").value,code:document.getElementById("labCode").value})});
+const d=await r.json();
+o.textContent=(d.success?"Challenge complete! ":"Some tests failed. ")+`Score ${d.score}% — `+
+(d.results||[]).map(x=>`${x.input} ${x.passed?"pass":"fail"}`).join("; ");}
+catch{o.textContent="Backend offline — start it with: uv run --frozen uvicorn app.main:app";}}
 async function ping(){try{const h=await(await fetch("http://localhost:8000/health")).json();
 const c=await(await fetch("http://localhost:8000/api/curriculum")).json();
 document.getElementById("apiOut").textContent=`health=${h.status} tracks=${c.tracks.length}`;}

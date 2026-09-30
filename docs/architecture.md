@@ -14,10 +14,12 @@ HTTP (routers/) → data access (repos.py) → pure logic (services.py)
 |---|---|
 | `main.py` | Wiring: app, middleware, lifespan, router mounting |
 | `routers/*` | HTTP only: status codes, auth, input/output shape |
+| `routers/lab.py` | Lab HTTP only: serves `LABS` prompts, persists attempts via `repos` |
 | `repos.py` | SQL only: sessions in, plain data out |
-| `services.py` | Pure functions: mastery, grading, recommendations |
-| `content.py` | Static tracks, library links, quizzes |
-| `models.py` | Pydantic validation |
+| `services.py` | Pure functions: mastery, grading, recommendations, lab scoring |
+| `sandbox.py` | All code execution: allowlisted AST only — never `exec`/`eval`/import |
+| `content.py` | Static tracks, library links, quizzes, lab fixtures (`LABS`) |
+| `models.py` | Pydantic validation (`QuizSubmit`, `LabSubmit`, …) |
 | `db.py` / `tables.py` | Engine, sessions, ORM tables |
 | `config.py` / `security.py` | Settings, HS256 JWT verify (`iss`/`aud`/`exp`/`sub`) + headers |
 | `routers/auth.py` | `POST /api/auth/token` mints JWT for a `user_id` |
@@ -52,6 +54,15 @@ pace cutoffs at 5/10 attempts); the two must agree.
 2. `services.grade_quiz` scores against `content.QUIZZES`
 3. `repos.add_progress` persists the attempt
 4. `services.recommend_next` picks review vs. next lesson from stored mastery
+
+## Data flow (lab submit)
+
+1. `POST /api/lab/submit` validates shape (`models.LabSubmit`) + caller (`security.py`);
+   `user_id` comes from the verified token, never the request body
+2. `services.validate_lab` scores against `content.LABS` by delegating
+   execution to `sandbox.run_lab` (allowlisted AST interpreter, never `exec`)
+3. `repos.add_progress` persists the attempt with `score`/`completed`, so labs
+   feed `mastery_of` / `recommend_next` / `Progress` exactly like quizzes
 
 ## Auth flow (JWT)
 
