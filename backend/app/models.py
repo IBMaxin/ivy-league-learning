@@ -39,3 +39,10 @@ class CommunityPostIn(BaseModel):
     track: str = Field(default="general", min_length=1, max_length=64)
 
     model_config = {"extra": "forbid", "str_strip_whitespace": True}
+
+
+class LabSubmit(BaseModel):
+    lesson_id: str = Field(..., min_length=1, max_length=64)
+    code: str = Field(..., min_length=1, max_length=10_000)
+
+    model_config = {"extra": "forbid", "str_strip_whitespace": True}

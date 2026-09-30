@@ -353,6 +353,33 @@ def _qa(q: str, choices: list[str], answer: int) -> dict:
     return {"q": q, "choices": choices, "answer": answer}
 
 
+LABS: dict[str, dict] = {
+    "py-101": {
+        "prompt": "Write a function `square(n)` that returns the square of a number.",
+        "test_cases": [
+            {"input": "square(2)", "expected": 4},
+            {"input": "square(5)", "expected": 25},
+            {"input": "square(-3)", "expected": 9},
+        ],
+    },
+    "algs-101": {
+        "prompt": "Write `is_palindrome(s)` that returns True if `s` is a palindrome.",
+        "test_cases": [
+            {"input": "is_palindrome('racecar')", "expected": True},
+            {"input": "is_palindrome('hello')", "expected": False},
+            {"input": "is_palindrome('madam')", "expected": True},
+        ],
+    },
+    "ds-101": {
+        "prompt": "Write `get_last(stack)` that returns the top list item without removing it.",
+        "test_cases": [
+            {"input": "get_last([1, 2, 3])", "expected": 3},
+            {"input": "get_last(['a', 'b'])", "expected": 'b'},
+        ],
+    },
+}
+
+
 QUIZZES: dict[str, list[dict]] = {
     "py-101": [
         _qa("What does print(2 + 3 * 2) output?", ["10", "8", "12", "7"], 1),
@@ -525,7 +552,12 @@ QUIZZES: dict[str, list[dict]] = {
         ),
         _qa(
             "A deadlock occurs when processes…",
-            ["finish too fast", "wait indefinitely for each other's resources", "share memory", "use threads"],
+            [
+                "finish too fast",
+                "wait indefinitely for each other's resources",
+                "share memory",
+                "use threads",
+            ],
             1,
         ),
         _qa(

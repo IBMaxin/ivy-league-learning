@@ -55,3 +55,23 @@ def pace_for(attempts: int) -> str:
     if attempts >= 10:
         return "accelerated"
     return "building"
+
+
+def validate_lab(lesson_id: str, code: str) -> dict:
+    """Score user code against lab fixtures. Pure orchestration over plain data.
+
+    Execution lives in sandbox.run_lab (allowlisted AST only, never exec).
+    Returns {"success": bool, "results": [...]} or {"success": False, "error": ...}
+    for unknown labs; syntax/definition failures surface as success=False results.
+    """
+    from .content import LABS
+    from .sandbox import run_lab
+
+    if lesson_id not in LABS:
+        return {"success": False, "error": "Lab not found"}
+    lab = LABS[lesson_id]
+    outcome = run_lab(code, lab["test_cases"])
+    if not outcome.get("ok"):
+        return {"success": False, "results": [], "error": outcome.get("error", "lab failed")}
+    results = outcome["results"]
+    return {"success": all(r.get("passed") for r in results), "results": results}

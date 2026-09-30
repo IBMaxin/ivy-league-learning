@@ -273,3 +273,255 @@ def run_code_for(language: str, code: str) -> dict:
     if language == "javascript":
         return run_javascript(code)
     return run_rust(code)
+
+
+class _Return(Exception):
+    """Internal control flow for `return` inside interpreted lab functions."""
+
+    def __init__(self, value: object) -> None:
+        super().__init__("return")
+        self.value = value
+
+
+_LAB_BUILTINS = ("range", "len", "str", "int", "float", "abs", "bool")
+_LAB_MAX_DEPTH = 50
+_LAB_MAX_CODE = 10_000
+
+
+class _LabRunner(_Runner):
+    """Interprets user-defined functions from AST. No exec/eval/import/attribute."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.funcs: dict[str, ast.FunctionDef] = {}
+        self.depth = 0
+
+    def load(self, tree: ast.Module) -> None:
+        for stmt in tree.body:
+            self.tick()
+            if isinstance(stmt, ast.FunctionDef):
+                if not stmt.name.isidentifier() or stmt.name.startswith("_"):
+                    raise SandboxError(f"bad function name {stmt.name!r}")
+                if stmt.decorator_list:
+                    raise SandboxError("decorators not allowed")
+                if stmt.args.vararg or stmt.args.kwarg or stmt.args.kwonlyargs:
+                    raise SandboxError("*args/**kwargs not allowed")
+                if stmt.args.defaults or stmt.args.kw_defaults:
+                    raise SandboxError("default args not allowed")
+                for a in stmt.args.args:
+                    if not a.arg.isidentifier() or a.arg.startswith("_"):
+                        raise SandboxError(f"bad arg name {a.arg!r}")
+                if stmt.name in self.funcs:
+                    raise SandboxError(f"duplicate function {stmt.name!r}")
+                self.funcs[stmt.name] = stmt
+            elif isinstance(stmt, ast.Assign | ast.AnnAssign | ast.Pass):
+                # Module-level constants allowed; reuse statement logic.
+                self.exec_stmt(stmt)
+            else:
+                raise SandboxError(
+                    f"only def/assign allowed at top level, got {type(stmt).__name__}"
+                )
+        if not self.funcs:
+            raise SandboxError("no function defined — define the requested function")
+
+    def exec_func_body(self, stmts: list[ast.stmt], env: dict[str, object]) -> object:
+        saved = self.env
+        self.env = env
+        try:
+            for stmt in stmts:
+                self.exec_lab_stmt(stmt)
+            return None
+        except _Return as r:
+            return r.value
+        finally:
+            self.env = saved
+
+    def exec_lab_stmt(self, stmt: ast.stmt) -> None:
+        self.tick()
+        if isinstance(stmt, ast.Return):
+            raise _Return(self.eval_expr(stmt.value) if stmt.value is not None else None)
+        if isinstance(stmt, ast.Expr):
+            # Allow print(...) as a no-op besides existing output cap; ignore otherwise.
+            if (
+                isinstance(stmt.value, ast.Call)
+                and isinstance(stmt.value.func, ast.Name)
+                and stmt.value.func.id == "print"
+            ):
+                if len(self.out) < MAX_PRINTS:
+                    self.do_print(stmt.value, stmt.lineno)
+                return
+            raise SandboxError("expression statements not allowed in functions")
+        if isinstance(stmt, ast.If | ast.For | ast.While):
+            self.exec_lab_block(stmt)
+            return
+        # Assign / AugAssign / Pass share logic with the print-runner.
+        self.exec_stmt(stmt)
+
+    def exec_lab_block(self, stmt: ast.If | ast.For | ast.While) -> None:
+        if isinstance(stmt, ast.If):
+            branch = stmt.body if self.eval_expr(stmt.test) else stmt.orelse
+            for s in branch:
+                self.exec_lab_stmt(s)
+            return
+        if isinstance(stmt, ast.For):
+            if not isinstance(stmt.target, ast.Name):
+                raise SandboxError("for x in ... only")
+            if stmt.orelse:
+                raise SandboxError("for/else not allowed")
+            iter_val = self.eval_expr(stmt.iter)
+            if not isinstance(iter_val, list | str):
+                raise SandboxError("for loops need range()/list/str only")
+            for i, item in enumerate(iter_val):
+                if i >= MAX_LOOPS:
+                    raise SandboxError("loop limit exceeded")
+                self.env[stmt.target.id] = item
+                for s in stmt.body:
+                    self.exec_lab_stmt(s)
+            return
+        if stmt.orelse:
+            raise SandboxError("while/else not allowed")
+        for _ in range(MAX_LOOPS):
+            if not self.eval_expr(stmt.test):
+                break
+            for s in stmt.body:
+                self.exec_lab_stmt(s)
+        else:
+            raise SandboxError("loop limit exceeded")
+
+    def eval_expr(self, node: ast.AST) -> object:  # noqa: C901, PLR0912
+        self.tick()
+        if isinstance(node, ast.Subscript):
+            target = self.eval_expr(node.value)
+            sl = node.slice
+            if isinstance(sl, ast.Slice):
+                lo = self.eval_expr(sl.lower) if sl.lower else None
+                hi = self.eval_expr(sl.upper) if sl.upper else None
+                st = self.eval_expr(sl.step) if sl.step else None
+                for v in (lo, hi, st):
+                    if v is not None and not isinstance(v, int):
+                        raise SandboxError("slice indices must be ints")
+                    if isinstance(v, int) and abs(v) > MAX_LOOPS:
+                        raise SandboxError("slice index too large")
+                try:
+                    if isinstance(target, list | str):
+                        return target[slice(lo, hi, st)]
+                except (IndexError, ValueError):
+                    raise SandboxError("slice out of range") from None
+                raise SandboxError("slicing lists/strings only")
+            idx = self.eval_expr(sl)
+            if not isinstance(idx, int) or abs(idx) > MAX_LOOPS:
+                raise SandboxError("index must be a small int")
+            try:
+                if isinstance(target, list | str):
+                    return target[idx]
+            except IndexError:
+                raise SandboxError("index out of range") from None
+            raise SandboxError("indexing lists/strings only")
+        if isinstance(node, ast.Dict):
+            return {
+                self.eval_expr(k): self.eval_expr(v)
+                for k, v in zip(node.keys, node.values, strict=True)
+                if k is not None
+            }
+        if isinstance(node, ast.Call):
+            return self.eval_lab_call(node)
+        return super().eval_expr(node)
+
+    def eval_lab_call(self, node: ast.Call) -> object:
+        if not isinstance(node.func, ast.Name):
+            raise SandboxError("method/attribute calls not allowed")
+        if node.keywords:
+            raise SandboxError("keyword args not allowed")
+        name = node.func.id
+        if name in self.funcs:
+            if self.depth >= _LAB_MAX_DEPTH:
+                raise SandboxError("recursion limit exceeded")
+            fn = self.funcs[name]
+            params = [a.arg for a in fn.args.args]
+            if len(node.args) != len(params):
+                raise SandboxError(f"{name}() takes {len(params)} args")
+            args = [self.eval_expr(a) for a in node.args]
+            self.depth += 1
+            try:
+                return self.exec_func_body(list(fn.body), dict(zip(params, args, strict=True)))
+            finally:
+                self.depth -= 1
+        if name in _LAB_BUILTINS:
+            if name == "abs":
+                if len(node.args) != 1:
+                    raise SandboxError("abs() takes one arg")
+                val = self.eval_expr(node.args[0])
+                if not isinstance(val, int | float):
+                    raise SandboxError("abs() of unsupported type")
+                return abs(val)
+            if name == "bool":
+                if len(node.args) != 1:
+                    raise SandboxError("bool() takes one arg")
+                return bool(self.eval_expr(node.args[0]))
+            return self.eval_call(node)
+        raise SandboxError(f"call {name}() not allowed")
+
+
+def run_lab(code: str, test_cases: list[dict]) -> dict:
+    """Safely run lab test cases against user code. AST-interpreted, never exec.
+
+    Returns {"ok": True, "results": [...]} or {"ok": False, "error": ...}.
+    Per-test failures are reported inside results with passed=False.
+    """
+    if len(code) > _LAB_MAX_CODE:
+        return {"ok": False, "error": "code too large (max 10000 chars)"}
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return {"ok": False, "error": f"SyntaxError: {e.msg} (line {e.lineno})"}
+    runner = _LabRunner()
+    try:
+        runner.load(tree)
+    except SandboxError as e:
+        return {"ok": False, "error": f"Stopped: {e}"}
+    results: list[dict] = []
+    for test in test_cases:
+        expr = test["input"]
+        expected = test["expected"]
+        try:
+            test_tree = ast.parse(expr, mode="eval")
+        except SyntaxError as e:
+            results.append(
+                {
+                    "input": expr,
+                    "expected": expected,
+                    "passed": False,
+                    "error": f"bad test: {e.msg}",
+                }
+            )
+            continue
+        try:
+            actual = runner.eval_expr(test_tree.body)
+        except SandboxError as e:
+            results.append(
+                {"input": expr, "expected": expected, "passed": False, "error": f"Stopped: {e}"}
+            )
+            continue
+        except Exception as e:  # noqa: BLE001 — surface logic errors as test failures
+            err = f"{type(e).__name__}: {e}"[:500]
+            results.append(
+                {"input": expr, "expected": expected, "passed": False, "error": err}
+            )
+            continue
+        # Equality with one exception: int/float interchange (4 == 4.0).
+        # Bools stay strict since isinstance(True, int) is True in Python.
+        if isinstance(expected, bool) or isinstance(actual, bool):
+            passed = type(actual) is type(expected) and actual == expected
+        elif isinstance(expected, int | float) and isinstance(actual, int | float):
+            passed = actual == expected
+        else:
+            passed = type(actual) is type(expected) and actual == expected
+        entry: dict = {"input": expr, "expected": expected, "passed": passed, "actual": actual}
+        try:
+            import json as _json
+
+            _json.dumps(entry)
+        except (TypeError, ValueError):
+            entry["actual"] = str(actual)[:500]
+        results.append(entry)
+    return {"ok": True, "results": results}

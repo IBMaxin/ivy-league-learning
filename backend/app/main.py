@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from .config import settings
 from .db import init_db
-from .routers import auth, community, curriculum, progress, quiz, sandbox
+from .routers import auth, community, curriculum, progress, quiz, sandbox, lab
 from .security import SecurityHeadersMiddleware
 
 logging.basicConfig(level=settings.log_level, format="%(asctime)s %(levelname)s %(message)s")
@@ -73,5 +73,6 @@ app.include_router(progress.router)
 app.include_router(quiz.router)
 app.include_router(community.router)
 app.include_router(sandbox.router)
+app.include_router(lab.router)
 
 __all__ = ["app"]
